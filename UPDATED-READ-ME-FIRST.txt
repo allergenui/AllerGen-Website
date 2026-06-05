@@ -1,0 +1,1 @@
+This is the corrected version. In index.html, the phone preview says 'Your Restaurant' and the Clear/Cross/Contains cards use the longer explanation text.
