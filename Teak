@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#221136" />
+  <title>Restaurant Allergen Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero" aria-labelledby="page-title">
+      <nav class="topbar" aria-label="Site header">
+        <a class="logo" href="#top" aria-label="Restaurant Allergen Guide Home">
+          <span class="logo-mark">A</span>
+          <span class="logo-text" data-restaurant-name>Restaurant Name</span>
+        </a>
+        <button class="ghost-button" id="reset-button" type="button">Reset</button>
+      </nav>
+
+      <section class="hero-card" id="top">
+        <div class="hero-copy">
+          <p class="restaurant-label" data-restaurant-name>Restaurant Name</p>
+          <h1 id="page-title">Find allergy-friendly menu options fast.</h1>
+          <p class="hero-subtitle">
+            Tap an allergen, or multiple allergens, below to instantly see which menu items are clear, contain it, or may involve cross contamination.
+          </p>
+        </div>
+
+        <div class="hero-panel" aria-label="Current selection summary">
+          <span class="panel-label">Selected allergen(s)</span>
+          <strong id="selected-allergen">None selected</strong>
+          <span class="panel-note" id="selected-note">Select one or more allergens to begin.</span>
+        </div>
+      </section>
+    </header>
+
+    <main class="content">
+      <section class="disclaimer" aria-label="Allergy disclaimer">
+        <strong>Important:</strong>
+        <span id="disclaimer-text">Always tell your server about allergies before ordering. Ingredient lists can change, and cross-contact may be possible.</span>
+      </section>
+
+      <section class="controls-card" aria-labelledby="allergen-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 1</p>
+            <h2 id="allergen-heading">Choose an allergen</h2>
+          </div>
+          <span class="small-pill" id="item-total">0 menu items</span>
+        </div>
+
+        <div class="allergen-grid" id="allergen-buttons" role="list" aria-label="Allergen filters"></div>
+
+        <div class="selected-chips-wrap" aria-live="polite">
+          <div class="selected-chips-header">
+            <span>Selected allergen(s)</span>
+            <button class="clear-selection-button" id="clear-selection-button" type="button">Clear all</button>
+          </div>
+          <div class="selected-chips" id="selected-chips">
+            <span class="empty-chip-message">No allergens selected yet.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="status-grid" aria-label="Allergen counts">
+        <article class="stat-card safe-stat">
+          <span class="stat-label">Clear</span>
+          <strong id="free-count">0</strong>
+          <span class="stat-caption">items without the selected allergen(s)</span>
+        </article>
+        <article class="stat-card caution-stat">
+          <span class="stat-label">Cross contamination</span>
+          <strong id="cross-count">0</strong>
+          <span class="stat-caption">items with possible cross-contact</span>
+        </article>
+        <article class="stat-card danger-stat">
+          <span class="stat-label">Contains</span>
+          <strong id="contains-count">0</strong>
+          <span class="stat-caption">items that contain selected allergen(s)</span>
+        </article>
+      </section>
+
+      <section class="results-shell" aria-labelledby="results-heading">
+        <div class="section-heading results-heading-row">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2 id="results-heading">Review your results</h2>
+          </div>
+        </div>
+
+        <div class="results-grid">
+          <article class="result-card free-card">
+            <header class="result-card-header">
+              <div>
+                <p class="card-kicker">May be options</p>
+                <h3>Does not contain selected allergen(s)</h3>
+              </div>
+              <span class="result-count" id="free-count-small">0</span>
+            </header>
+            <div class="result-list" id="free-list"></div>
+          </article>
+
+          <article class="result-card cross-card">
+            <header class="result-card-header">
+              <div>
+                <p class="card-kicker">Ask server</p>
+                <h3>Possible cross contamination</h3>
+              </div>
+              <span class="result-count" id="cross-count-small">0</span>
+            </header>
+            <div class="result-list" id="cross-list"></div>
+          </article>
+
+          <article class="result-card contains-card">
+            <header class="result-card-header">
+              <div>
+                <p class="card-kicker">Avoid</p>
+                <h3>Contains selected allergen(s)</h3>
+              </div>
+              <span class="result-count" id="contains-count-small">0</span>
+            </header>
+            <div class="result-list" id="contains-list"></div>
+          </article>
+        </div>
+      </section>
+
+
+    </main>
+  </div>
+
+  <div class="sticky-results-bar" id="sticky-results-bar" aria-live="polite">
+    <div class="sticky-results-copy">
+      <strong id="selected-count-label">No allergens selected</strong>
+      <span>Select all allergens that apply, then review your results.</span>
+    </div>
+    <button class="view-results-button" id="view-results-button" type="button">View Results</button>
+  </div>
+
+  <script src="menu-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+const RESTAURANT_INFO = {
+  "name": "Teak Neighborhood Grill",
+  "menuVersion": "June 29th 2026",
+  "contactName": "",
+  "contactEmail": "",
+  "disclaimer": "Always tell your server about allergies before ordering. Ingredient lists can change, and cross-contact may be possible.",
+  "contactPhone": ""
+};
+
+const ALLERGENS = [
+  "Milk",
+  "Egg",
+  "Fish",
+  "Shellfish",
+  "Tree Nuts",
+  "Peanuts",
+  "Wheat/Gluten",
+  "Soy/Soybean",
+  "Sesame"
+];
+
+const MENU_ITEMS = [
+  {
+    "category": "Starters",
+    "name": "Roasted Red Pepper Hummus",
+    "description": "Roasted red pepper hummus, sliced cucumbers and feta cheese. Served with warm pita bread.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Seafood & Spinach Dip",
+    "description": "House-made seafood and spinach dip made with three cheeses, diced tomatoes and served with tortilla chips.",
+    "allergens": [
+      "Milk",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "OMG Chips",
+    "description": "House-made Teak chips topped with blue cheese crumbles and maple bacon drizzled with balsamic reduction.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Garlic Herb Edamame",
+    "description": "Steamed edamame tossed with fresh garlic, sea salt and fresh herbs.",
+    "allergens": [
+      "Soy/Soybean"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Starters",
+    "name": "Soft Pretzel Rolls",
+    "description": "Three soft pretzel rolls served with melted cheddar cheese and honey mustard.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Philly Freeway Rolls",
+    "description": "Steak and cheese with bell peppers, fried and topped with sweet Thai chili sauce and green onions.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Pan Roasted Mussels",
+    "description": "Black mussels, garlic, white wine, panko bread crumbs, tomatoes and fresh herbs served with toasted ciabatta bread.",
+    "allergens": [
+      "Shellfish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Fresh-Fried Mozzarella Rounds",
+    "description": "Panko-crusted fresh mozzarella quick fried and served with marinara sauce.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Chicken Wings",
+    "description": "Eight wings tossed in sauce and served with ranch or blue cheese.",
+    "allergens": [
+      "Milk",
+      "Egg"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Street Corn Dip",
+    "description": "Roasted street corn mix topped with mixed cheese and pickled jalapenos, served with yellow salsa chips.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Bruschetta",
+    "description": "Garlic ciabatta bread served with tomato bruschetta, fresh mozzarella and balsamic reduction.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Starters",
+    "name": "Teaky Burger Dip",
+    "description": "Bacon cheeseburger dip with ground beef, cheddar cheese, pickles, red onion, tomatoes, bacon bits and fried pita chips.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Quesadillas & Tacos",
+    "name": "Devil Dog Quesadilla",
+    "description": "Grilled chicken, jalapeños, ghost pepper cheese, mixed cheese, tortilla strips and sriracha aioli on a jalapeño flour tortilla.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Quesadillas & Tacos",
+    "name": "Crabby Beach Quesadilla",
+    "description": "Crab bechamel, firecracker sauce, spinach, pickled jalapenos, potato strings and mixed cheese on a jalapeno tortilla.",
+    "allergens": [
+      "Milk",
+      "Shellfish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Quesadillas & Tacos",
+    "name": "Ahi Tacos",
+    "description": "Two ahi tuna tacos in a wonton shell with seaweed salad, spicy mayo, eel sauce and crunchy wasabi peas.",
+    "allergens": [
+      "Egg",
+      "Fish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Quesadillas & Tacos",
+    "name": "Teaky Tacos",
+    "description": "Pork or chicken, ghost-pepper cheese, mixed cheese, pico and tortilla strips on a soft tortilla with salsa and sour cream.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Quesadillas & Tacos",
+    "name": "Blackened Mahi Tacos",
+    "description": "Three tacos with blackened mahi, tartar sauce, coleslaw, pico and tortilla strips on a flour tortilla.",
+    "allergens": [
+      "Egg",
+      "Fish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Flatbreads",
+    "name": "Buffalo Chicken Flat",
+    "description": "Diced crispy chicken tossed in medium Buffalo sauce, marinara, blue cheese crumbles and shredded mozzarella.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Flatbreads",
+    "name": "The Greeky",
+    "description": "Red hummus, red onions, cucumbers, tomato garlic mix, black olives, feta, mozzarella and balsamic glaze.",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Flatbreads",
+    "name": "Pesto Chicken Flat",
+    "description": "Grilled chicken breast, pesto, mozzarella cheese, diced tomatoes and chopped bacon.",
+    "allergens": [
+      "Milk",
+      "Tree Nuts",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Flatbreads",
+    "name": "Pepperoni Flat",
+    "description": "Marinara, mozzarella cheese and pepperoni.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Flatbreads",
+    "name": "BBQ Chicken Flat",
+    "description": "Sweet BBQ, mozzarella, smoked Gouda, red onion, grilled chicken and fresh cilantro.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Flatbreads",
+    "name": "Firecracker Flat",
+    "description": "Chopped shrimp tossed in firecracker sauce with tomato, mozzarella cheese, smoked bacon and green scallions.",
+    "allergens": [
+      "Milk",
+      "Shellfish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Entrées",
+    "name": "Chicken Pesto Pasta",
+    "description": "Grilled chicken over penne pasta tossed in pesto Alfredo sauce with roasted tomatoes, spinach and Parmesan cheese.",
+    "allergens": [
+      "Milk",
+      "Tree Nuts",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Entrées",
+    "name": "Chicken Tortellini Pasta",
+    "description": "Cheese tortellini tossed in spicy alfredo sauce with roasted cherry tomatoes, bacon bits and shredded chicken.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Entrées",
+    "name": "Cajun Alfredo Pasta",
+    "description": "Penne pasta tossed in Cajun alfredo sauce with tomatoes, spinach, bacon, garlic bread and choice of chicken or shrimp.",
+    "allergens": [
+      "Milk",
+      "Shellfish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Entrées",
+    "name": "Saint Louies Ribs",
+    "description": "Smoked ribs with house-made sweet Thai chili BBQ sauce over bistro fries with a side of coleslaw.",
+    "allergens": [],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Entrées",
+    "name": "Man Overboard",
+    "description": "Grilled salmon with house-made scallop potatoes, asparagus and bearnaise sauce with herbs and lemon.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Fish"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Bowls",
+    "name": "Steak Frites Bowl",
+    "description": "Chopped steak with seasoned fries, peppercorn sauce, blue cheese crumbles, bacon, chimichurri and onion frizzles.",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Bowls",
+    "name": "Cookout Bowl",
+    "description": "Jasmine rice, bacon, baked beans, pico, mixed cheese, smoked brisket, pulled pork, whiskey BBQ sauce and crispy onion strings.",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Bowls",
+    "name": "Mac N Nash Bowl",
+    "description": "Three cheese mac n cheese topped with fried chicken, Nashville hot sauce, bacon bits and jalapeño ranch.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Bowls",
+    "name": "Moana Bowl",
+    "description": "Jasmine rice, ahi tuna chunks, seaweed salad, cucumbers, wonton strips, sriracha mayo, eel sauce and wasabi peas.",
+    "allergens": [
+      "Egg",
+      "Fish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Bowls",
+    "name": "Rancho Relaxo",
+    "description": "Chicken, rice, black bean and corn, salsa, mixed cheese, pico, tortilla strips and sour cream.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Salads",
+    "name": "Chicken Ranch-Caesar Salad",
+    "description": "Chopped romaine with ranch dressing, Caesar dressing, parmesan cheese, bacon bits and onion frizzle.",
+    "allergens": [
+      "Milk",
+      "Egg"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Salads",
+    "name": "Almond Crusted Mahi",
+    "description": "Mixed greens, tomatoes, bacon, cucumbers, almond crusted mahi, crumbled feta and honey citrus vinaigrette.",
+    "allergens": [
+      "Milk",
+      "Fish",
+      "Tree Nuts"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Salads",
+    "name": "Grilled Romaine & Salmon",
+    "description": "Grilled romaine with tomatoes, corn, feta cheese and citrus glazed Scottish salmon with mango cilantro sauce.",
+    "allergens": [
+      "Milk",
+      "Fish"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Salads",
+    "name": "The Greek",
+    "description": "Mixed greens, Kalamata olives, cucumbers, tomatoes, feta, hummus and grilled chicken with toasted pita bread and Greek dressing.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Pierogis",
+    "name": "Loaded Pierogis",
+    "description": "Pierogis tossed in sour cream, chive and Sriracha alfredo sauce with chopped bacon and onion frizzles.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Pierogis",
+    "name": "Backyard Pierogis",
+    "description": "Pierogis tossed in white cheddar cheese sauce, whiskey BBQ sauce, pulled pork, bacon and onion frizzles.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Pierogis",
+    "name": "Shroomin It Pierogis",
+    "description": "Pierogis tossed in mushroom alfredo sauce with diced tomatoes, onion frizzles and fresh herbs.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Teak It To Australia",
+    "description": "Australian Wagyu beef, pickles, lettuce, tomato, cheddar cheese, bacon jam and burger sauce on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Texas Two Step",
+    "description": "Double smash patties, Swiss cheese, American cheese, grilled onions, bacon and 1000 island dressing on Texas toast.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Balboa",
+    "description": "Beef, shredded steak, onions, peppers, mushrooms, herb mayo, provolone and white cheddar queso on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "OMG Burger",
+    "description": "Blackened beef, bleu cheese crumbles, Teak chips, balsamic reduction and bibb lettuce on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "General Bison",
+    "description": "Bison patty, ghost pepper cheese, jalapeño chips, salsa, guacamole, spicy mayo and spring mix on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Say Cheese!",
+    "description": "Double smash patties with American and cheddar cheese, bacon, burger sauce, chili and tomatoes between two grilled cheese sandwiches.",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Maverick",
+    "description": "Beef, cheddar cheese, whiskey BBQ sauce, onion ring, smoked brisket and peppercorn sauce on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Daredevil",
+    "description": "Double smash patty, ghost pepper cheese, jalapeños, spicy mayo, mango habanero BBQ and spicy chips with Jamaican jerk sauce on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Spicy Veronica",
+    "description": "Beef, ghost pepper cheese, pickled jalapeños, Sriracha mayo, potato strings, tomato and spring mix on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Buffalo Herd",
+    "description": "Double smash patties, blue cheese, smoked gouda, bacon, potato strings, garlic mayo and mild buffalo sauce on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Harry Carry",
+    "description": "Tangy BBQ sauce, sharp cheddar cheese and onion frizzle on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Teak It Easy",
+    "description": "Two smash patties, American cheese, cheddar cheese, red onions, pickles, burger sauce, lettuce and tomatoes on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Plane Jane",
+    "description": "Beef, American cheese, bibb lettuce and tomato on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Savannah Blue Burger",
+    "description": "Beef patty with blue cheese, bacon, spicy apple chutney, whiskey BBQ sauce, red onions and bibb lettuce on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Waffle Burger",
+    "description": "Beef, American cheese, over-medium egg and bacon between two pearl sugar infused waffles.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Burgers",
+    "name": "Teak Challenge",
+    "description": "Two pounds of beef, American, Swiss and provolone cheese, bacon, mozzarella rounds, beer battered onion rings, chili, queso and jalapeños on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Pig",
+    "description": "Beef, smoked ham, smoked bacon, pulled pork, white cheddar melted cheese, onion jam and herb mayo on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Macho Nacho",
+    "description": "Double smash patties, ghost pepper cheese, bibb lettuce, tomato, sour cream, guacamole, salsa, tortilla chips, white queso and ranchero sauce on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Kobe Burger",
+    "description": "American Wagyu beef with Swiss cheese, sautéed mushrooms and onions, herb mayo and spring mix on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "I'm Fondue of You",
+    "description": "Double smash patties, Swiss cheese, mushrooms, crispy onions, horsey mayo and beef gravy on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Brazilian",
+    "description": "Beef, ham, over-medium egg, potato strings, provolone cheese, bibb lettuce, tomato and ranch dressing on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Americano",
+    "description": "Double smash patties, ham, pulled pork, sriracha mayo, Swiss cheese, mustard and pickles on toasted ciabatta bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Mike Bison",
+    "description": "Bison meat, remoulade aioli, smoked Gouda, sautéed mushrooms and bibb lettuce on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Big Game Rancher",
+    "description": "Bison, elk, wild boar and Wagyu patty with Angry Orchard onion jam, herb mayo, bacon and spring mix on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Glazed Donut Burger",
+    "description": "Beef, American cheese and smoked bacon between two large glazed donuts.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "Spicy Monk",
+    "description": "Double smash patties, ghost pepper cheese, Angry Orchard onion jam, spicy mayo, jalapeno chips and white queso on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Burgers",
+    "name": "The Drunken Monk",
+    "description": "Beef, Angry Orchard onion jam, roasted cherry tomatoes, smoked bacon, herb mayo, provolone, white cheddar cheese and Teak chips on a pretzel bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Brisket Melt",
+    "description": "Texas style toast, BBQ brisket, bacon, sautéed onions and white cheddar cheese sauce.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "The Grizzly",
+    "description": "Blackened Scottish salmon, guacamole, lettuce, tomato, red onion, Dijon mustard and herb mayo on a ciabatta bun.",
+    "allergens": [
+      "Egg",
+      "Fish",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Fire Grilled Chicken",
+    "description": "Grilled chicken breast, herb mayo, provolone cheese, tomato, guacamole, smoked bacon and crispy potato strings on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Grandma's Chicken",
+    "description": "Fried chicken topped with cheddar cheese, bacon, hot honey and spicy apple chutney on Texas toast.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Killer Bee",
+    "description": "Grilled chicken breast with honey garlic sauce, chipotle aioli, ghost pepper cheese, banana peppers, tomato and spring mix on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "The New Yorker",
+    "description": "Roast beef, ham, provolone, horsey mayo, tomatoes, red onions, bibb lettuce, pickles, Dijon mustard and white vinegar on a toasted baguette roll.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "French Dip",
+    "description": "Open-faced prime rib, provolone cheese and horseradish mayo on a garlic artisan baguette with au jus.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Shredded Piggy",
+    "description": "Shredded chicken, pulled pork, ham, ranchero sauce, Swiss cheese, lettuce, tomato, potato strings and sofrito mayo on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Smoking Gun",
+    "description": "Breaded chicken breast tossed in medium Buffalo sauce with smoked Gouda, smoked ham, bacon, potato strings, ranch, tomato and lettuce on a brioche bun.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Dunkin Chicken",
+    "description": "Breaded chicken tossed in mild buffalo sauce with hot honey, bacon, cheddar cheese and a fried egg between two glazed donuts.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean",
+      "Sesame"
+    ]
+  },
+  {
+    "category": "Sandwiches",
+    "name": "Ghostface Wrapper",
+    "description": "Grilled chicken tossed in spicy sauce with ghost pepper cheese, Sriracha aioli, tortilla strips, jalapeños, lettuce and jalapeño flour tortilla.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Dessert",
+    "name": "Carnival Fries",
+    "description": "Fried funnel fries tossed in sugar and served with ice cream and caramel sauce topped with powdered sugar.",
+    "allergens": [
+      "Milk",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Dessert",
+    "name": "Churros",
+    "description": "Churros tossed in cinnamon sugar and served with vanilla bean ice cream and caramel sauce.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Dessert",
+    "name": "Chocolate Brownie Overload",
+    "description": "Warm baked brownie with chocolate dessert sauce, whipped cream and vanilla bean ice cream.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Dessert",
+    "name": "The Ultimate Cronie",
+    "description": "Half donut and half croissant dough fried to order, tossed in cinnamon sugar and topped with vanilla bean ice cream and caramel sauce.",
+    "allergens": [
+      "Milk",
+      "Egg",
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Fish",
+      "Shellfish",
+      "Soy/Soybean"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Coleslaw",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Scallop Potatoes",
+    "description": "",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Mashed Potatoes",
+    "description": "",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Sweet Tots",
+    "description": "",
+    "allergens": [],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Plain Fries",
+    "description": "",
+    "allergens": [],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Chili Cheese Fries",
+    "description": "",
+    "allergens": [
+      "Milk"
+    ],
+    "crossContamination": [
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Garlic Bistro Fries",
+    "description": "",
+    "allergens": [],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Sidewinders",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Teak's Potato Chips",
+    "description": "",
+    "allergens": [
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Asparagus",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Sweet Potato Tots",
+    "description": "",
+    "allergens": [],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish",
+      "Wheat/Gluten"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Garlic Bistro Sidewinders",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Beer Battered Onion Rings",
+    "description": "",
+    "allergens": [
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Baked Beans",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "House Salad",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Garlic Bistro Brussels Sprouts",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Teak Chips",
+    "description": "",
+    "allergens": [
+      "Wheat/Gluten"
+    ],
+    "crossContamination": [
+      "Milk",
+      "Egg",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "category": "Sides",
+    "name": "Broccoli",
+    "description": "",
+    "allergens": [],
+    "crossContamination": []
+  },
+  {
+    "category": "Sides",
+    "name": "Caesar Salad",
+    "description": "",
+    "allergens": [
+      "Egg"
+    ],
+    "crossContamination": []
+  }
+];
+# Teak Neighborhood Grill Allergen Guide
+
+Upload these files to GitHub Pages, Netlify, or Vercel.
+
+The restaurant is responsible for verifying all allergen information before sharing this website with guests.
+
+const state = { selectedAllergens: [] };
+
+const elements = {
+  buttons: document.getElementById("allergen-buttons"),
+  selectedAllergen: document.getElementById("selected-allergen"),
+  selectedNote: document.getElementById("selected-note"),
+  itemTotal: document.getElementById("item-total"),
+  reset: document.getElementById("reset-button"),
+  clearSelection: document.getElementById("clear-selection-button"),
+  selectedChips: document.getElementById("selected-chips"),
+  containsCount: document.getElementById("contains-count"),
+  crossCount: document.getElementById("cross-count"),
+  freeCount: document.getElementById("free-count"),
+  containsCountSmall: document.getElementById("contains-count-small"),
+  crossCountSmall: document.getElementById("cross-count-small"),
+  freeCountSmall: document.getElementById("free-count-small"),
+  containsList: document.getElementById("contains-list"),
+  crossList: document.getElementById("cross-list"),
+  freeList: document.getElementById("free-list"),
+  stickyResultsBar: document.getElementById("sticky-results-bar"),
+  viewResultsButton: document.getElementById("view-results-button"),
+  selectedCountLabel: document.getElementById("selected-count-label")
+};
+
+function init() {
+  const name = RESTAURANT_INFO.name || "Restaurant";
+  document.title = `${name} Allergen Guide`;
+  document.querySelectorAll("[data-restaurant-name]").forEach(node => node.textContent = name);
+  document.querySelector(".logo")?.setAttribute("aria-label", `${name} Allergen Guide Home`);
+  document.getElementById("disclaimer-text").textContent = RESTAURANT_INFO.disclaimer || "Always tell your server about allergies before ordering. Ingredient lists can change, and cross-contact may be possible.";
+  elements.itemTotal.textContent = `${MENU_ITEMS.length} menu items`;
+  renderButtons();
+  bindEvents();
+  render();
+}
+
+function renderButtons() {
+  elements.buttons.innerHTML = "";
+  ALLERGENS.forEach(allergen => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "allergen-button";
+    button.dataset.allergen = allergen;
+    button.setAttribute("aria-pressed", "false");
+    button.textContent = allergen;
+    button.addEventListener("click", () => {
+      toggleAllergen(allergen);
+      render();
+    });
+    elements.buttons.appendChild(button);
+  });
+}
+
+function bindEvents() {
+  elements.reset.addEventListener("click", clearSelections);
+  elements.clearSelection.addEventListener("click", clearSelections);
+  elements.viewResultsButton.addEventListener("click", () => {
+    document.getElementById("results-heading").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function toggleAllergen(allergen) {
+  if (state.selectedAllergens.includes(allergen)) {
+    state.selectedAllergens = state.selectedAllergens.filter(item => item !== allergen);
+  } else {
+    state.selectedAllergens = [...state.selectedAllergens, allergen];
+  }
+}
+
+function getItemStatus(item, selected) {
+  if (!selected.length) return "none";
+  if (selected.some(allergen => item.allergens.includes(allergen))) return "contains";
+  if (selected.some(allergen => (item.crossContamination || []).includes(allergen))) return "cross";
+  return "clear";
+}
+
+function render() {
+  updateActiveButtons();
+  updateStickyResultsBar();
+  renderSelectedChips();
+
+  const selected = state.selectedAllergens;
+  const selectedLabel = formatSelectedAllergens(selected);
+
+  const contains = selected.length ? MENU_ITEMS.filter(item => getItemStatus(item, selected) === "contains") : [];
+  const cross = selected.length ? MENU_ITEMS.filter(item => getItemStatus(item, selected) === "cross") : [];
+  const free = selected.length ? MENU_ITEMS.filter(item => getItemStatus(item, selected) === "clear") : [];
+
+  elements.selectedAllergen.textContent = selectedLabel;
+  elements.selectedNote.textContent = selected.length ? `Showing ${selectedLabel} results` : "Select one or more allergens to begin.";
+
+  updateCount(elements.freeCount, free.length);
+  updateCount(elements.crossCount, cross.length);
+  updateCount(elements.containsCount, contains.length);
+  elements.freeCountSmall.textContent = free.length;
+  elements.crossCountSmall.textContent = cross.length;
+  elements.containsCountSmall.textContent = contains.length;
+
+  renderGroupedItems(elements.freeList, free, "Clear", selected.length ? "No items are listed without the selected allergen(s)." : "Select one or more allergens to see items that do not contain them.");
+  renderGroupedItems(elements.crossList, cross, "Cross Contamination", selected.length ? "No items are marked for cross contamination with the selected allergen(s)." : "Select one or more allergens to see possible cross contamination items.");
+  renderGroupedItems(elements.containsList, contains, "Contains", selected.length ? "No items contain the selected allergen(s)." : "Select one or more allergens to see items that contain them.");
+}
+
+function clearSelections() {
+  state.selectedAllergens = [];
+  render();
+}
+
+function removeAllergen(allergen) {
+  state.selectedAllergens = state.selectedAllergens.filter(item => item !== allergen);
+  render();
+}
+
+function renderSelectedChips() {
+  elements.selectedChips.innerHTML = "";
+  if (!state.selectedAllergens.length) {
+    const empty = document.createElement("span");
+    empty.className = "empty-chip-message";
+    empty.textContent = "No allergens selected yet.";
+    elements.selectedChips.appendChild(empty);
+    elements.clearSelection.disabled = true;
+    return;
+  }
+
+  elements.clearSelection.disabled = false;
+  state.selectedAllergens.forEach(allergen => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "selected-chip";
+    chip.setAttribute("aria-label", `Remove ${allergen}`);
+    chip.innerHTML = `<span>${allergen}</span><strong aria-hidden="true">×</strong>`;
+    chip.addEventListener("click", () => removeAllergen(allergen));
+    elements.selectedChips.appendChild(chip);
+  });
+}
+
+function updateStickyResultsBar() {
+  const count = state.selectedAllergens.length;
+  if (!count) {
+    elements.stickyResultsBar.classList.remove("visible");
+    elements.selectedCountLabel.textContent = "No allergens selected";
+    return;
+  }
+  elements.stickyResultsBar.classList.add("visible");
+  elements.selectedCountLabel.textContent = `${count} allergen${count === 1 ? "" : "s"} selected`;
+}
+
+function updateActiveButtons() {
+  document.querySelectorAll(".allergen-button").forEach(button => {
+    const active = state.selectedAllergens.includes(button.dataset.allergen);
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function formatSelectedAllergens(selected) {
+  if (!selected.length) return "None selected";
+  if (selected.length <= 2) return selected.join(" + ");
+  return `${selected.slice(0, 2).join(" + ")} + ${selected.length - 2} more`;
+}
+
+function updateCount(element, count) { element.textContent = count; }
+
+function renderGroupedItems(container, items, badgeText, emptyText) {
+  container.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = emptyText;
+    container.appendChild(empty);
+    return;
+  }
+
+  const grouped = groupByCategory(items);
+  Object.keys(grouped).forEach(category => {
+    const group = document.createElement("section");
+    group.className = "category-group";
+
+    const header = document.createElement("div");
+    header.className = "category-header";
+
+    const title = document.createElement("h4");
+    title.className = "category-title";
+    title.textContent = category;
+
+    const count = document.createElement("span");
+    count.className = "category-count";
+    count.textContent = `${grouped[category].length} item${grouped[category].length === 1 ? "" : "s"}`;
+
+    const list = document.createElement("ul");
+    list.className = "item-list";
+
+    grouped[category].slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+      const row = document.createElement("li");
+      row.className = "item-row";
+
+      const itemCopy = document.createElement("span");
+      itemCopy.className = "item-copy";
+
+      const name = document.createElement("span");
+      name.className = "item-name";
+      name.textContent = item.name;
+      itemCopy.appendChild(name);
+
+      if (item.description) {
+        const description = document.createElement("span");
+        description.className = "item-description";
+        description.textContent = item.description;
+        itemCopy.appendChild(description);
+      }
+
+      const badge = document.createElement("span");
+      badge.className = "item-badge";
+      badge.textContent = badgeText;
+
+      row.appendChild(itemCopy);
+      row.appendChild(badge);
+      list.appendChild(row);
+    });
+
+    header.append(title, count);
+    group.append(header, list);
+    container.appendChild(group);
+  });
+}
+
+function groupByCategory(items) {
+  return items.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
+}
+
+init();
+
+:root {
+  --caution: #f2c14e;
+  --caution-2: #ffe7a3;
+  --bg: #09050f;
+  --surface: rgba(255, 255, 255, 0.075);
+  --purple: #2b1243;
+  --purple-2: #42185f;
+  --yellow: #d5a019;
+  --yellow-2: #f0c960;
+  --red: #8e2018;
+  --red-2: #ff7666;
+  --safe: #40d98f;
+  --safe-2: #a7f3c1;
+  --text: #fffaf4;
+  --muted: #cabde5;
+  --muted-2: #9f92be;
+  --border: rgba(255, 255, 255, 0.13);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(213, 160, 25, 0.26), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgba(142, 32, 24, 0.38), transparent 26rem),
+    radial-gradient(circle at 50% -8%, rgba(98, 38, 142, 0.55), transparent 34rem),
+    linear-gradient(145deg, #07030d 0%, #13081e 48%, #08040d 100%);
+  background-attachment: fixed;
+  padding-bottom: 112px;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.25;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
+button { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+}
+
+.topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: rgba(9, 5, 15, 0.68);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logo-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #21102d;
+  background: linear-gradient(145deg, #ffe28a 0%, var(--yellow) 48%, #b12a21 100%);
+  box-shadow: 0 12px 30px rgba(213, 160, 25, 0.2);
+}
+
+.logo-text {
+  font-size: 0.95rem;
+  max-width: 54vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ghost-button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.hero-card, .controls-card, .result-card, .stat-card, .disclaimer {
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.045));
+  backdrop-filter: blur(22px);
+  box-shadow: var(--shadow);
+}
+
+.hero-card {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 34px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--yellow-2);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.restaurant-label {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(240, 201, 96, 0.42);
+  border-radius: var(--radius-pill);
+  color: #fff8dd;
+  background: linear-gradient(135deg, rgba(213, 160, 25, 0.23), rgba(142, 32, 24, 0.16));
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  max-width: 760px;
+  margin-bottom: 12px;
+  font-size: clamp(2.2rem, 9vw, 5.7rem);
+  line-height: 0.92;
+  letter-spacing: -0.075em;
+}
+
+.hero-subtitle {
+  max-width: 660px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.hero-panel {
+  position: relative;
+  display: grid;
+  align-content: end;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 224, 138, 0.46), transparent 12rem),
+    linear-gradient(145deg, rgba(142, 32, 24, 0.74), rgba(43, 18, 67, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.panel-label, .panel-note {
+  position: relative;
+  color: rgba(255, 250, 244, 0.74);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-panel strong {
+  position: relative;
+  display: block;
+  margin: 10px 0;
+  font-size: clamp(2rem, 10vw, 4rem);
+  line-height: 0.92;
+  letter-spacing: -0.055em;
+}
+
+.content { display: grid; gap: 16px; margin-top: 16px; }
+.controls-card { padding: 18px; border-radius: var(--radius-lg); }
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 4vw, 2.1rem);
+  letter-spacing: -0.045em;
+}
+
+.small-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.allergen-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.allergen-button {
+  position: relative;
+  min-height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 13px 13px 13px 44px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.055);
+  text-align: left;
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.allergen-button::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--purple-2), var(--red));
+  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.16);
+}
+
+.allergen-button.active {
+  color: #21102d;
+  border-color: rgba(255, 255, 255, 0.44);
+  background: linear-gradient(145deg, #ffeaa2 0%, var(--yellow) 42%, #bf3329 100%);
+  box-shadow: 0 18px 40px rgba(213, 160, 25, 0.18);
+}
+
+.selected-chips-wrap {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.selected-chips-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.clear-selection-button {
+  color: #fff7f5;
+  background: linear-gradient(135deg, #c0392b, #8c1c13);
+  border: 1px solid rgba(255, 205, 198, 0.58);
+  border-radius: var(--radius-pill);
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.selected-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; align-items: center; overflow: visible; }
+
+.selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: var(--radius-pill);
+  padding: 8px 10px 8px 12px;
+  color: #21102d;
+  background: linear-gradient(145deg, #ffeaa2 0%, var(--yellow) 45%, #bf3329 100%);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 900;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.selected-chip strong {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  color: #ffeaa2;
+  background: rgba(33, 16, 45, 0.9);
+  line-height: 1;
+}
+
+.empty-chip-message { color: var(--muted-2); font-size: 0.92rem; }
+
+.status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+.stat-card { display: grid; gap: 4px; min-height: 130px; padding: 18px; border-radius: 26px; }
+.stat-label, .stat-caption { color: var(--muted); font-weight: 700; }
+.stat-label { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.stat-card strong { display: block; font-size: clamp(2.25rem, 11vw, 4rem); line-height: 0.95; letter-spacing: -0.07em; }
+.stat-caption { margin-top: auto; font-size: 0.82rem; }
+
+.danger-stat { background: radial-gradient(circle at 90% 0%, rgba(255,118,102,.28), transparent 10rem), linear-gradient(160deg, rgba(142,32,24,.34), rgba(255,255,255,.045)); }
+.safe-stat { background: radial-gradient(circle at 90% 0%, rgba(64,217,143,.34), transparent 10rem), linear-gradient(160deg, rgba(64,217,143,.18), rgba(255,255,255,.045)); }
+.caution-stat { background: radial-gradient(circle at 90% 0%, rgba(242,193,78,.34), transparent 10rem), linear-gradient(160deg, rgba(242,193,78,.18), rgba(255,255,255,.045)); }
+
+.results-shell { display: grid; gap: 14px; }
+.results-heading-row { align-items: center; margin-bottom: 0; }
+.results-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.result-card { overflow: hidden; border-radius: var(--radius-lg); }
+
+.result-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-kicker {
+  margin: 0 0 5px;
+  color: var(--muted-2);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.result-card h3 { margin: 0; font-size: 1.18rem; letter-spacing: -0.04em; }
+.result-count {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+}
+
+.contains-card .result-count { color: #ffd4cf; }
+.free-card .result-count { color: var(--safe-2); }
+.cross-card .result-count { color: var(--caution-2); }
+
+.result-list { display: grid; gap: 10px; padding: 14px; }
+.category-group { border: 1px solid rgba(255,255,255,.1); border-radius: 20px; background: rgba(0,0,0,.16); overflow: hidden; }
+.category-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 13px; background: rgba(255,255,255,.045); }
+.category-title { margin: 0; color: var(--text); font-size: 0.83rem; font-weight: 900; letter-spacing: 0.07em; text-transform: uppercase; }
+.category-count { color: var(--muted); font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
+
+.item-list { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.item-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 13px; background: rgba(255,255,255,.022); }
+.item-copy { display: grid; gap: 4px; min-width: 0; }
+.item-name { font-weight: 700; line-height: 1.35; }
+.item-description { display: block; color: var(--muted); font-size: 0.82rem; line-height: 1.35; }
+
+.item-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.contains-card .item-badge { color: #ffe2de; background: rgba(142,32,24,.35); border: 1px solid rgba(255,118,102,.35); }
+.free-card .item-badge { color: #d9ffe8; background: rgba(64,217,143,.16); border: 1px solid rgba(64,217,143,.38); }
+.cross-card .item-badge { color: #fff4cf; background: rgba(242,193,78,.18); border: 1px solid rgba(242,193,78,.46); }
+
+.empty-state { padding: 22px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+.disclaimer {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 22px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.disclaimer strong { color: var(--yellow-2); white-space: nowrap; }
+
+.sticky-results-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%) translateY(130%);
+  z-index: 50;
+  width: min(920px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 24px;
+  background: rgba(20,9,32,.92);
+  box-shadow: 0 22px 70px rgba(0,0,0,.55);
+  backdrop-filter: blur(18px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .24s ease, opacity .24s ease;
+}
+
+.sticky-results-bar.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+.sticky-results-copy { display: grid; gap: 2px; min-width: 0; }
+.sticky-results-copy strong { color: var(--yellow-2); font-size: .92rem; }
+.sticky-results-copy span { color: var(--muted); font-size: .78rem; line-height: 1.25; }
+
+.view-results-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  white-space: nowrap;
+  font-weight: 800;
+  color: #20112d;
+  background: linear-gradient(135deg, var(--yellow-2), var(--yellow));
+  cursor: pointer;
+}
+
+@media (min-width: 680px) {
+  .app-shell { padding: 24px 24px 54px; }
+  .hero-card { grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr); padding: 28px; }
+  .allergen-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 960px) {
+  .results-grid { grid-template-columns: 1fr 1fr 1fr; align-items: start; }
+  .allergen-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) { .status-grid { grid-template-columns: 1fr; } }
+@media (max-width: 460px) {
+  .app-shell { padding-left: 12px; padding-right: 12px; }
+  .logo-text { display: none; }
+  .hero-card, .controls-card { border-radius: 26px; }
+  .hero-card { padding: 18px; }
+  .hero-panel { min-height: 148px; }
+  .allergen-grid { grid-template-columns: 1fr; }
+  .section-heading { display: grid; }
+  .small-pill { width: fit-content; }
+}
